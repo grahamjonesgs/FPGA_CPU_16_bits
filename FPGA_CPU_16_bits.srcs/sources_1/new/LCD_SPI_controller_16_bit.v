@@ -204,7 +204,7 @@ rams_sp_nc rams_sp_nc1 (
     `include "control_tasks.vh"
     `include "stack_tasks.vh"
     `include "functions.vh"
-    `include "7_seg.vh"
+    `include "seven_seg.vh"
     `include "opcode_select.vh"
     `include "uart_tasks.vh"
 

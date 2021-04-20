@@ -1,0 +1,10 @@
+FPGA_CPU_16_bits.cache
+FPGA_CPU_16_bits.hbs
+FPGA_CPU_16_bits.hw
+FPGA_CPU_16_bits.ip_user_files
+FPGA_CPU_16_bits.runs
+FPGA_CPU_16_bits.sim
+*.o
+*.debug
+assembler/testcode/*
+klausscc
