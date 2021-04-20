@@ -1,0 +1,245 @@
+
+//
+// Colours 
+// RED             0xf800
+// GREEN           0x07e0
+// BLUE            0x001f
+// BLACK           0x0000
+// WHITE           0xffff
+// GRAY            0x8c51
+// YELLOW          0xFFE0
+// CYAN            0x07FF
+// PURPLE          0xF81F
+
+// Starting Code to flash LED
+//LOOP1:
+3030 0001           //LEDV 0x0001
+F013 FFFF           //DELAYV 0xFFFF
+3030 0000           //LEDV 0x0000
+F013 FFFF           //DELAYV 0xFFFF
+1000 0000           //JMP LOOP1:
+
+
+
+// Code sample for LCD control
+//START:
+2005 0000           //LCDRSET 0
+2003 03E7           //DELAYV 999
+2005 00FF           //LCDRSET 0xFF
+2003 0013           //DELAYV 0x13
+0300 2222           //PUSHV 0x2222
+0102 1111           //SETR C 0x1111
+0300 3333           //PUSHV 0x3333
+0312                //PUSH C
+0300 4444           //PUSHV 0x4444
+0312                //PUSH C
+0320                //POP A
+0320                //POP A
+0101 FFFF           //SETR B 0xFFFF
+//LOOP1:
+2004 0001           //LED 1
+2031                //DELAYR B
+2004 0000           //LED 0
+0321                //POP B  // Should error
+0121 00FF           //DECRV B 0x0FF
+0210 0016           //JMP LOOP1:
+
+
+
+
+
+
+
+
+
+//START:
+2005 0000           //LCDRSET 0
+2003 0999           //DELAYV 999
+2005 0001           //LCDRSET 1
+2003 1313           //DELAYV 0x1313
+//LOOP1:
+2004 0001           //LED 1
+2003 FFFF           //DELAYV 0xFFFF
+2004 0000           //LED 0
+2003 FFFF           //DELAYV 0xFFFF
+0210 0008           //JMP LOOP1:
+
+
+
+2005 0000 // Reset low
+2003 1313  // delay 100ms - check timing
+2005 0001 // reset high
+2003 1313  // delay 100ms - check timing
+2001 00C0 //Power Control 1
+2002 0009  // was 23h
+2001 00C1 //Power Control 2
+2002 0010
+2001 00C5 //VCOM Control 1
+2002 003E
+2002 0028
+2001 00C7 //VCOM Control 2
+2002 0086
+2001 0036 //Memory Access Control
+2002 0048 //Left bottom start
+2001 003A //Pixel Format Set
+2002 0055 //65K color: 16-bit/pixel
+2001 0020 //Display Inversion OFF
+2001 00B1 //Frame Rate Control
+2002 0000
+2002 0018
+2001 00B6 //Display Function Control
+2002 0008
+2002 00A2
+2002 0027
+2002 0000
+2001 00F2 //3Gamma Function Disable
+2002 0000
+2001 0026 //Gamma Set
+2002 0001
+2001 00E0 //Positive Gamma Correction
+2002 000F
+2002 0031
+2002 002B
+2002 000C
+2002 000E
+2002 0008
+2002 004E
+2002 00F1
+2002 0037
+2002 0007
+2002 0010
+2002 0003
+2002 000E
+2002 0009
+2002 0000
+2001 00E1 //Negative Gamma Correction
+2002 0000
+2002 000E
+2002 0014
+2002 0003
+2002 0011
+2002 0007
+2002 0031
+2002 00C1
+2002 0048
+2002 0008
+2002 000F
+2002 000C
+2002 0031
+2002 0036
+2002 000F
+2001 0011 //Sleep Out
+2003 2626 // spi_delay(32'd20_000_000  // delay 200ms
+2001 0029 //Display ON
+2001 002A //set colum (x) address
+2002 0001
+2002 0001
+2002 0001
+2002 0001
+2001 002B // set Page(y) address
+2002 0001
+2002 0001
+2002 0001
+2002 0001
+2001 002C // Memory Write
+2002 0000
+2002 0000
+2003 FFFF  // delay 1 second - check timing
+
+
+// Small square
+2001 002A //set colum (x) address
+2002 0000
+2002 0012
+2002 0000
+2002 0014
+2001 002B // set Page(y) address
+2002 0000
+2002 0012
+2002 0000
+2002 0014
+2001 002C // Memory Write
+2002 00FF
+2002 00FE
+2002 00FF
+2002 00FE
+2002 00FF
+2002 00FE
+2002 00FF
+2002 00FE
+2002 00FF
+2002 00FE
+2002 00FF
+2002 00FE
+2002 00FF
+2002 00FE
+2002 00FF
+2002 00FE
+2002 00FF
+2002 00FE
+2003 FFFF  // Delay
+
+//Big sqaure with loop
+2001 002A //set colum (x) address 16 wide
+2002 0000
+2002 0052
+2002 0000
+2002 0061
+2001 002B // set Page(y) address 16 high
+2002 0000
+2002 0052
+2002 0000
+2002 0061
+2001 002C // Memory Write
+
+0101 00FF // Set reg B with FF
+
+0310      // Copy reg B into A
+2002 00FF
+2002 00FE
+0150      // Dec A
+0203 0005 // Jump back if not zero by 6
+
+//Big red sqaure with loop
+2001 002A //set colum (x) address 16 wide
+2002 0000
+2002 0070
+2002 0000
+2002 0090
+2001 002B // set Page(y) address 16 high
+2002 0000
+2002 0070
+2002 0000
+2002 0090
+2001 002C // Memory Write
+0100 0400 // Set reg A with 0400
+2002 00F8
+2002 0000
+0120 0001 // Dec A
+0203 0006 // Jump back if not zero by 6
+
+//smaller other colour sqaure with loop check zero
+2001 002A //set colum (x) address 16 wide
+2002 0000
+2002 0070
+2002 0000
+2002 0090
+2001 002B // set Page(y) address 16 high
+2002 0000
+2002 0070
+2002 0000
+2002 0080
+2001 002C // Memory Write
+0100 0000 // Set reg A with 0000
+2002 0000
+2002 001F
+0110 0001 // Inc A
+0130 0400 // Compare to 0x400
+0207 0008 // Jump back if not equal by 8
+
+
+2003 FFFF  // Delay
+2003 FFFF
+FFFE 0000 // error
+
+
