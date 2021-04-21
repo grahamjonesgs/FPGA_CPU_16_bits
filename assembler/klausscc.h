@@ -4,7 +4,7 @@
 #define MAX_WORDS 256
 #define STR_LEN 256
 #define MAX_MACRO_LOOPS 10
-#define DEFAULT_OPCODE_FILE "opcode_file.txt"
+#define DEFAULT_OPCODE_FILE "opcode_select.vh"
 
 struct Opcode {
 								char name[32];
