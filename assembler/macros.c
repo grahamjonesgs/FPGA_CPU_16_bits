@@ -174,3 +174,72 @@ int expand_macros(FILE *input_fp,FILE *output_fp,char *temp_file1, char *temp_fi
 
 
 } // end function
+
+int parse_data (FILE *input_fp) {
+        char str[STR_LEN];
+        char *token;
+        char line_words[MAX_WORDS][STR_LEN];
+        char input_line[STR_LEN];
+        int word_number;
+
+        rewind(input_fp);
+
+        while(fgets(str, STR_LEN, input_fp)!=NULL)   //loop to read the file
+        {
+                strncpy(input_line,str,STR_LEN);
+                input_line[strlen(input_line)-1]=0;
+                token = strtok(str, " ");
+                word_number=0;
+                for (int i=0; i<MAX_WORDS; i++) {
+                        line_words[i][0]=0;
+                }
+
+                while(token!=NULL)
+                {
+                        strncpy(line_words[word_number],token,STR_LEN);
+                        if(line_words[word_number][strlen(line_words[word_number])-1]=='\n') {
+                                line_words[word_number][strlen(line_words[word_number])-1]=0;
+                        }
+                        token = strtok(NULL, " ");
+                        word_number++;
+                        if (word_number>MAX_WORDS-1)
+                        {
+                                word_number--;
+                        }
+                }
+
+                if (line_words[0][0]=='#') {
+                        if(find_data_element(line_words[0])!=NULL) {
+                                printf("Warning. Duplicate variable definition for %s\n",line_words[0]);
+                                error_control.warning_count++;
+                        }
+                        if(strlen(line_words[1])==0) {
+                                printf("Warning. No type definition for variable %s\n",line_words[0]);
+                                error_control.warning_count++;
+                        }
+                        if (strcmp(line_words[1],"INT")==0) {
+                                add_data_element(line_words[0],line_words[1],1,NULL);
+                        }
+
+                        else {
+                                if (strcmp(line_words[1],"STRING")==0) {
+                                        add_data_element(line_words[0],line_words[1],1,NULL);
+                                }
+                                else {
+                                        printf("Warning. Invalid datatype %s for variable %s\n",line_words[1],line_words[0]);
+                                        error_control.warning_count++;
+                                }
+                        }
+                }
+
+
+
+
+
+        } // end while read file
+
+        return(0);
+
+
+
+}

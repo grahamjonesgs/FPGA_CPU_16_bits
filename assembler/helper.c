@@ -6,6 +6,7 @@
 #include "klausscc.h"
 
 extern struct Error_control error_control;
+extern struct Data_elements * data_elements_head;
 
 // Return index for register number to addf to opcode
 int reg_num(char* reg) {
@@ -146,4 +147,35 @@ int find_macro(char* name,struct Macro *macros) {
                 }
         }
         return value;
+}
+
+int add_data_element(char * name,char * type, int length,char * data) {
+        if (data_elements_head==NULL) {
+                data_elements_head = (struct Data_elements *) malloc(sizeof(struct Data_elements));
+        }
+
+        struct Data_elements * current = data_elements_head;
+        while (current->next != NULL) {
+                current = current->next;
+        }
+        current->next = (struct Data_elements *) malloc(sizeof(struct Data_elements));
+        strncpy(current->next->name,name,STR_LEN);
+        strncpy(current->next->type,type,STR_LEN);
+        current->next->length=length;
+        current->next->data=data;
+
+        current->next->next = NULL;
+}
+
+struct Data_elements * find_data_element(char * name) {
+        struct Data_elements * current = data_elements_head;
+        if (data_elements_head==NULL) {
+                return(NULL);
+        }
+
+        while (current->next != NULL) {
+                if(strcmp(current->name,name)==0) return(current);
+                current = current->next;
+        }
+        return(NULL);
 }

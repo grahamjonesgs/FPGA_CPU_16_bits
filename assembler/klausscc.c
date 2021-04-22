@@ -6,6 +6,7 @@
 #include "klausscc.h"
 
 struct Error_control error_control={0,0,0,0,0,0};
+struct Data_elements * data_elements_head=NULL;
 
 int main(int argc, char **argv) {
 
@@ -51,6 +52,25 @@ int main(int argc, char **argv) {
         int macro_number;
 
         char opcode_file[STR_LEN]=DEFAULT_OPCODE_FILE;
+
+
+        /*////////////////////////////////////////////////////////
+        printf("xxxxx Adding\n");
+        add_data_element ("Hello","Type1");
+        add_data_element ("Hello2","Type2");
+        add_data_element ("Hello3","Type3");
+
+        struct Data_elements * test;
+        if ((test = find_data_element("Hello22"))==NULL)
+        {
+                printf("Not found\n");
+        }
+        else {
+                printf("xxxxx finding %s\n", test->type);
+        }
+        return(1);
+        //////////////////////////////////////////////////////*/
+
 
         while ((getops_char = getopt(argc, argv, "i:o:d:c:vk?")) != -1)
                 switch (getops_char) {
@@ -144,6 +164,10 @@ int main(int argc, char **argv) {
                 return(-1);
         }
 
+// Parse data variables
+
+parse_data(intermediate_fp);
+
 // Pass 1 to create the label and line number list
         error_control.input_line_number=0;
         error_control.pass_number=1;
@@ -160,10 +184,8 @@ int main(int argc, char **argv) {
                 for (int i=0; i<MAX_WORDS; i++) {
                         line_words[i][0]=0;
                 }
-
                 while(token!=NULL)
                 {
-
                         strncpy(line_words[word_number],token,STR_LEN);
                         if(line_words[word_number][strlen(line_words[word_number])-1]=='\n') {
                                 line_words[word_number][strlen(line_words[word_number])-1]=0;
@@ -178,9 +200,9 @@ int main(int argc, char **argv) {
                         }
                 }
 
-                if ((line_words[0][0]=='/'&&line_words[0][1]=='/')||(strlen(line_words[0])==0)) {
+                if ((line_words[0][0]=='/'&&line_words[0][1]=='/')||(strlen(line_words[0])==0)||line_words[0][0]=='#') {
 
-                } // if comment
+                } // if comment or blank
                 else
                 {
                         if(is_label(line_words[0]))
@@ -249,7 +271,7 @@ int main(int argc, char **argv) {
                 }
                 strncpy(line_words[word_number],"",STR_LEN); // blank next word
 
-                if ((line_words[0][0]=='/'&&line_words[0][1]=='/')||is_label(line_words[0])||strlen(line_words[0])==0) {
+                if ((line_words[0][0]=='/'&&line_words[0][1]=='/')||is_label(line_words[0])||strlen(line_words[0])==0||line_words[0][0]=='#') {
                         fprintf(debug_fp,"%s\n",input_line);
                         if(is_label(line_words[0]))
                         {
