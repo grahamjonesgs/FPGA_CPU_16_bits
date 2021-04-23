@@ -34,7 +34,7 @@ struct Error_control {
 };
 
 struct Data_elements {
-	int count;
+	int position;
 	char name[STR_LEN];
 	char type[STR_LEN];
 	char * data;
@@ -52,7 +52,8 @@ int is_label(char* word);
 int find_label_line(char* label,struct Label *labels);
 int find_macro(char* name,struct Macro *macros);
 int expand_macros(FILE *input_fp,FILE *output_fp,char *temp_file, char *temp_file2, struct Macro *macros);
-int parse_data (FILE *input_fp);
+int parse_data (FILE *input_fp,int code_pc);
 
-int add_data_element(char * name,char * type, int length,char * data);
+int add_data_element(char * name,char * type, int length,char * data,int start_data);
 struct Data_elements * find_data_element(char * name);
+int is_var(char* word);

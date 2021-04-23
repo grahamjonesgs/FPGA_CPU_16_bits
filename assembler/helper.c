@@ -149,22 +149,33 @@ int find_macro(char* name,struct Macro *macros) {
         return value;
 }
 
-int add_data_element(char * name,char * type, int length,char * data) {
+int add_data_element(char * name,char * type, int length,char * data,int start_data) {
+        struct Data_elements * current;
+
         if (data_elements_head==NULL) {
                 data_elements_head = (struct Data_elements *) malloc(sizeof(struct Data_elements));
-        }
+                data_elements_head->position=start_data;
+                strncpy(data_elements_head->name,name,STR_LEN);
+                strncpy(data_elements_head->type,type,STR_LEN);
+                data_elements_head->length=length;
+                data_elements_head->data=data;
+                data_elements_head->next = NULL;
 
-        struct Data_elements * current = data_elements_head;
-        while (current->next != NULL) {
-                current = current->next;
         }
-        current->next = (struct Data_elements *) malloc(sizeof(struct Data_elements));
-        strncpy(current->next->name,name,STR_LEN);
-        strncpy(current->next->type,type,STR_LEN);
-        current->next->length=length;
-        current->next->data=data;
+        else {
 
-        current->next->next = NULL;
+                current = data_elements_head;
+                while (current->next != NULL) {
+                        current = current->next;
+                }
+                current->next = (struct Data_elements *) malloc(sizeof(struct Data_elements));
+                strncpy(current->next->name,name,STR_LEN);
+                strncpy(current->next->type,type,STR_LEN);
+                current->next->length=length;
+                current->next->data=data;
+                current->next->position=current->position+current->length;
+                current->next->next = NULL;
+        }
 }
 
 struct Data_elements * find_data_element(char * name) {
@@ -178,4 +189,15 @@ struct Data_elements * find_data_element(char * name) {
                 current = current->next;
         }
         return(NULL);
+}
+
+int is_var(char* word) {
+
+        if(word[0]=='#') {
+                return(1);
+        }
+        else
+        {
+                return(0);
+        }
 }

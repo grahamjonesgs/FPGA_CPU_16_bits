@@ -50,27 +50,9 @@ int main(int argc, char **argv) {
         char bitcode_matrix [0xFFFF][5]; // For holding all bitcode to calc checksum
         unsigned int bitcode_matrix_counter=0;
         int macro_number;
+        struct Data_elements * current_data = data_elements_head;
 
         char opcode_file[STR_LEN]=DEFAULT_OPCODE_FILE;
-
-
-        /*////////////////////////////////////////////////////////
-        printf("xxxxx Adding\n");
-        add_data_element ("Hello","Type1");
-        add_data_element ("Hello2","Type2");
-        add_data_element ("Hello3","Type3");
-
-        struct Data_elements * test;
-        if ((test = find_data_element("Hello22"))==NULL)
-        {
-                printf("Not found\n");
-        }
-        else {
-                printf("xxxxx finding %s\n", test->type);
-        }
-        return(1);
-        //////////////////////////////////////////////////////*/
-
 
         while ((getops_char = getopt(argc, argv, "i:o:d:c:vk?")) != -1)
                 switch (getops_char) {
@@ -164,9 +146,6 @@ int main(int argc, char **argv) {
                 return(-1);
         }
 
-// Parse data variables
-
-parse_data(intermediate_fp);
 
 // Pass 1 to create the label and line number list
         error_control.input_line_number=0;
@@ -242,6 +221,11 @@ parse_data(intermediate_fp);
                 } //end of file-reading loop.
         } //else if comment
 
+        // Parse data variables
+
+        parse_data(intermediate_fp,code_PC);
+
+
 // Pass 2
         code_PC=0;
         next_code_PC=0;
@@ -272,7 +256,9 @@ parse_data(intermediate_fp);
                 strncpy(line_words[word_number],"",STR_LEN); // blank next word
 
                 if ((line_words[0][0]=='/'&&line_words[0][1]=='/')||is_label(line_words[0])||strlen(line_words[0])==0||line_words[0][0]=='#') {
-                        fprintf(debug_fp,"%s\n",input_line);
+                        if (line_words[0][0]!='#') {
+                                fprintf(debug_fp,"%s\n",input_line); // These get printed at the end
+                        }
                         if(is_label(line_words[0]))
                         {
                                 fprintf(code_fp,"//%s\n",line_words[0]);
@@ -313,12 +299,29 @@ parse_data(intermediate_fp);
                                 }
                                 else
                                 {
-                                        convert_hex(line_words[1+opcodes[opcode_index].registers],temp_string);
-                                        strcat(code_line,temp_string);
-                                        strcat(bitcode_line,temp_string);
-                                        strncpy(bitcode_matrix[bitcode_matrix_counter++],temp_string,5);
+                                        if(is_var(line_words[1+opcodes[opcode_index].registers])) {
+
+                                                struct Data_elements * variable=find_data_element(line_words[1+opcodes[opcode_index].registers]);
+                                                if (variable==NULL) {
+                                                        printf("Error. Undefined variable %s, line %i\n",line_words[1+opcodes[opcode_index].registers],error_control.input_line_number);
+                                                        error_control.error_count++;
+                                                }
+                                                else {
+                                                        sprintf(temp_string,"%04X",variable->position);
+                                                        strcat(code_line,temp_string);
+                                                        strcat(bitcode_line,temp_string);
+                                                        strncpy(bitcode_matrix[bitcode_matrix_counter++],temp_string,5);
+                                                }
+                                        }
+                                        else {
+                                                convert_hex(line_words[1+opcodes[opcode_index].registers],temp_string);
+                                                strcat(code_line,temp_string);
+                                                strcat(bitcode_line,temp_string);
+                                                strncpy(bitcode_matrix[bitcode_matrix_counter++],temp_string,5);
+                                        }
 
                                 }
+
                                 next_code_PC=code_PC+2;
                                 if(strlen(line_words[2+opcodes[opcode_index].registers])>0) {
                                         if(line_words[2+opcodes[opcode_index].registers][0]!='/'&&line_words[2+opcodes[opcode_index].registers][1]!='/')
@@ -345,6 +348,41 @@ parse_data(intermediate_fp);
                         code_PC=next_code_PC;
                 } //end of file-reading loop.
         } //else if comment
+
+// Add the data to the files
+
+        if(data_elements_head!=NULL) {
+                fprintf(bitcode_fp,"Z");
+                fprintf(debug_fp,"Data segment\n");
+                current_data=data_elements_head;
+                while (current_data != NULL) {
+                        if (strcmp(current_data->type,"INT")==0) {
+                                fprintf(debug_fp,"%04X: %s %s\n",current_data->position,current_data->name, current_data->type);
+                                strcpy(bitcode_line,current_data->data);
+                                bitcode_line[4]=0;
+                                fprintf(bitcode_fp, "%s", bitcode_line);
+                                fprintf(code_fp,"%s                // %s\n",bitcode_line,current_data->name);
+                        }
+                        else {
+                                strncpy(temp_string,current_data->data,current_data->length);
+                                temp_string[current_data->length]=0;
+                                fprintf(debug_fp,"%04X: %s %s %s\n",current_data->position,current_data->name, current_data->type, temp_string);
+                              //  for (int i=current_data->position; i<current_data->position+current_data->length; i++) {
+                               for (int i=0; i<current_data->length; i++) {
+                                        sprintf(bitcode_line,"00%02X",current_data->data[i]);
+                                        bitcode_line[4]=0;
+                                        fprintf(bitcode_fp, "%s", bitcode_line);
+                                        fprintf(code_fp,"%s                // %s\n",bitcode_line,current_data->name);
+
+///////////  Need to decide how to store string values in the data segment. Maybe 00 then ASCII
+
+                                }
+                        }
+
+                        current_data = current_data->next;
+                }
+        }
+
 
         for (int i=0; i<bitcode_matrix_counter; i++) {
                 checksum=(checksum+strtol(bitcode_matrix[i],NULL,16))%(0xFFFF+1);

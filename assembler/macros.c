@@ -175,12 +175,15 @@ int expand_macros(FILE *input_fp,FILE *output_fp,char *temp_file1, char *temp_fi
 
 } // end function
 
-int parse_data (FILE *input_fp) {
+int parse_data (FILE *input_fp, int code_pc) {
         char str[STR_LEN];
+        char remain_str[STR_LEN];
+        int remain_str_counter;
         char *token;
         char line_words[MAX_WORDS][STR_LEN];
         char input_line[STR_LEN];
         int word_number;
+        char * data;
 
         rewind(input_fp);
 
@@ -217,24 +220,46 @@ int parse_data (FILE *input_fp) {
                                 printf("Warning. No type definition for variable %s\n",line_words[0]);
                                 error_control.warning_count++;
                         }
-                        if (strcmp(line_words[1],"INT")==0) {
-                                add_data_element(line_words[0],line_words[1],1,NULL);
-                        }
-
                         else {
-                                if (strcmp(line_words[1],"STRING")==0) {
-                                        add_data_element(line_words[0],line_words[1],1,NULL);
-                                }
+                                if (strcmp(line_words[1],"INT")==0) {
+                                  if(strlen(line_words[2])!=0) {
+                                    data = malloc(5);
+                                    convert_hex(line_words[2],data);
+                                    add_data_element(line_words[0],line_words[1],4,data,code_pc);
+                                      }
+                                      else {
+                                        data = malloc(5);
+                                        strcpy(data,"0000");
+                                        add_data_element(line_words[0],line_words[1],4,data,code_pc);
+                                      }
+                                } // if int
                                 else {
-                                        printf("Warning. Invalid datatype %s for variable %s\n",line_words[1],line_words[0]);
-                                        error_control.warning_count++;
-                                }
-                        }
-                }
-
-
-
-
+                                        if (strcmp(line_words[1],"STRING")==0) {
+                                                //  remain_str_counter=0;
+                                                strcpy(remain_str,"");
+                                                for (int i=2; i< MAX_WORDS-2; i++) {
+                                                        if ((strlen(line_words[i])!=0)&&i!=2) {
+                                                                strncat(remain_str," ",STR_LEN-1);
+                                                        }
+                                                        strncat(remain_str,line_words[i],STR_LEN-1);
+                                                }
+                                                if(strlen(remain_str)==0) {
+                                                        printf("Warning. No definition for string variable %s\n",line_words[0]);
+                                                        error_control.warning_count++;
+                                                }
+                                                else {
+                                                        data = malloc(strlen(remain_str)+1);
+                                                        strcpy(data,remain_str);
+                                                        add_data_element(line_words[0],line_words[1],strlen(remain_str),data,code_pc);
+                                                }
+                                        }
+                                        else {
+                                                printf("Warning. Invalid datatype %s for variable %s\n",line_words[1],line_words[0]);
+                                                error_control.warning_count++;
+                                        } // else if string
+                                } // else if int
+                        } // else if blank type
+                } // if variable definition
 
         } // end while read file
 
