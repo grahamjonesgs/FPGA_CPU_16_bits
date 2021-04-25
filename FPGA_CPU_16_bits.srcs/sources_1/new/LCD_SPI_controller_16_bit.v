@@ -329,7 +329,7 @@ begin
             begin
                 r_seven_seg_value<=32'h22222222;
                 r_checksum=r_old_checksum; // remove last value from checksum, as was checksum incomming    
-        
+                r_checksum=r_checksum+o_ram_write_addr-1;
                 if (r_checksum==o_ram_write_value)
                 begin
                     o_TX_LCD_Count<=4'd1;
