@@ -177,13 +177,14 @@ int expand_macros(FILE *input_fp,FILE *output_fp,char *temp_file1, char *temp_fi
 
 int parse_data (FILE *input_fp, int code_pc) {
         char str[STR_LEN];
-        char temp_string[STR_LEN*4];  // needs ot hold expanded format of data.
+        char temp_string[STR_LEN*4];  // needs to hold expanded format of data.
         char remain_str[STR_LEN];
         char *token;
         char line_words[MAX_WORDS][STR_LEN];
         char input_line[STR_LEN];
         int word_number;
         char * data;
+        int array_count;
 
         rewind(input_fp);
 
@@ -220,55 +221,94 @@ int parse_data (FILE *input_fp, int code_pc) {
                                 printf("Warning. No type definition for variable %s\n",line_words[0]);
                                 error_control.warning_count++;
                         }
-                        else {
-                                if (strcmp(line_words[1],"INT")==0) {
-                                        if(strlen(line_words[2])!=0) {
-                                                data = malloc(5);
-                                                convert_hex(line_words[2],data);
-                                                add_data_element(line_words[0],line_words[1],4,data,code_pc);
-                                        }
-                                        else {
-                                                data = malloc(5);
-                                                strcpy(data,"0000");
-                                                add_data_element(line_words[0],line_words[1],4,data,code_pc);
-                                        }
-                                } // if int
+                        else if (strcmp(line_words[1],"INT")==0) {
+                                if(strlen(line_words[2])!=0) {
+                                        data = malloc(5);
+                                        convert_hex(line_words[2],data);
+                                        add_data_element(line_words[0],line_words[1],4,data,code_pc);
+                                }
                                 else {
-                                        if (strcmp(line_words[1],"STRING")==0) {
-                                                strcpy(remain_str,"");
-                                                for (int i=2; i< MAX_WORDS-2; i++) {
-                                                        if ((strlen(line_words[i])!=0)&&i!=2) {
-                                                                strncat(remain_str," ",STR_LEN-1);
-                                                        }
-                                                        strncat(remain_str,line_words[i],STR_LEN-1);
-                                                }
-                                                if(strlen(remain_str)==0) {
-                                                        printf("Warning. No definition for string variable %s\n",line_words[0]);
-                                                        error_control.warning_count++;
-                                                }
-                                                if(strlen(remain_str)>=STR_LEN) {
-                                                        printf("Error. String too long for string variable %s\n",line_words[0]);
-                                                        error_control.error_count++;
-                                                }
-
-                                                else {
-                                                        data = malloc(strlen(remain_str)*4+1);
-                                                        data[0]=0;
-                                                        for (int i=0; i<strlen(remain_str); i++) {
-                                                                sprintf(temp_string,"00%02X",remain_str[i]);
-                                                                strcat(data,temp_string);
-                                                        }
-                                                        data[strlen(remain_str)*4]=0;
-                                                        //  strcpy(data,remain_str);
-                                                        add_data_element(line_words[0],line_words[1],strlen(remain_str)*4,data,code_pc);
-                                                }
+                                        data = malloc(5);
+                                        strcpy(data,"0000");
+                                        add_data_element(line_words[0],line_words[1],4,data,code_pc);
+                                }
+                        }         // if int
+                        else if (strcmp(line_words[1],"STRING")==0) {
+                                strcpy(remain_str,"");
+                                for (int i=2; i< MAX_WORDS-2; i++) { // Concat back into one string
+                                        if ((strlen(line_words[i])!=0)&&i!=2) {
+                                                strncat(remain_str," ",STR_LEN-1);
                                         }
-                                        else {
-                                                printf("Warning. Invalid datatype %s for variable %s\n",line_words[1],line_words[0]);
-                                                error_control.warning_count++;
-                                        } // else if string
-                                } // else if int
-                        } // else if blank type
+                                        strncat(remain_str,line_words[i],STR_LEN-1);
+                                }
+                                if(strlen(remain_str)==0) {
+                                        printf("Warning. No definition for string variable %s\n",line_words[0]);
+                                        error_control.warning_count++;
+                                }
+                                if(strlen(remain_str)>=STR_LEN) {
+                                        printf("Error. String too long for string variable %s\n",line_words[0]);
+                                        error_control.error_count++;
+                                }
+
+                                else {
+                                        data = malloc(strlen(remain_str)*4+1);
+                                        data[0]=0;
+                                        for (int i=0; i<strlen(remain_str); i++) {
+                                                sprintf(temp_string,"00%02X",remain_str[i]);
+                                                strcat(data,temp_string);
+                                        }
+                                        data[strlen(remain_str)*4]=0;
+                                        add_data_element(line_words[0],line_words[1],strlen(remain_str)*4,data,code_pc);
+                                }
+                        }
+                        else if(strcmp(line_words[1],"ARRAY")==0) {
+                                array_count=0;
+                                for (int i=2; i< MAX_WORDS-2; i++) {
+                                        if (strlen(line_words[i])!=0) {
+                                                array_count++;
+                                        }
+                                }
+                                if (array_count==0) {
+                                        printf("Warning. Empty array definition for variable %s\n",line_words[0]);
+                                        error_control.warning_count++;
+                                }
+
+                                data = malloc(array_count*4+1);
+                                data[0]=0;
+                                for (int i=2; i<array_count+2; i++) {
+                                        convert_hex(line_words[i],temp_string);
+                                        strcat(data,temp_string);
+                                }
+                                data[array_count*4]=0;
+                                add_data_element(line_words[0],line_words[1],array_count*4,data,code_pc);
+
+
+
+                        }
+                        else if(strcmp(line_words[1],"ARRAY_SIZE")==0) {
+                                array_count=convert_hex(line_words[2],NULL);
+                                if (array_count==0) {
+                                        printf("Warning. Empty array definition for variable %s\n",line_words[0]);
+                                        error_control.warning_count++;
+                                }
+                                if (array_count>MAX_ARRAY) {
+                                        printf("Warning. Array bigger than max allowed %i for variable %s\n",MAX_ARRAY,line_words[0]);
+                                        array_count=MAX_ARRAY;
+                                        error_control.warning_count++;
+                                }
+                                data = malloc(array_count*4+1);
+                                data[0]=0;
+                                for (int i=2; i<array_count+2; i++) {
+                                        strcat(data,"0000");
+                                }
+                                data[array_count*4]=0;
+                                add_data_element(line_words[0],line_words[1],array_count*4,data,code_pc);
+
+                        }
+                        else {
+                                printf("Warning. Invalid datatype %s for variable %s\n",line_words[1],line_words[0]);
+                                error_control.warning_count++;
+                        }   // else is invalide variable type
                 } // if variable definition
         } // end while read file
 

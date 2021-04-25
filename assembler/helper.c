@@ -37,6 +37,10 @@ int reg_num(char* reg) {
 // Convert to hex representation
 int convert_hex(char* input, char* output) {
         int value;
+
+        if (output==NULL) {
+          output = malloc (5);
+        }
         if((strcmp(input,"0x0000")==0)||(strcmp(input,"0")==0)||(strcmp(input,"0x0")==0))
         {
                 sprintf(output,"%04X",0);
@@ -59,7 +63,7 @@ int convert_hex(char* input, char* output) {
                         return 0;
                 }
                 sprintf(output,"%04X",value);
-                return 0;
+                return value;
 
 
         } // end if hex assume decimal
@@ -81,7 +85,7 @@ int convert_hex(char* input, char* output) {
                 return 0;
         }
         sprintf(output,"%04X",value);
-        return 0;
+        return (value);
 
 }
 
@@ -189,7 +193,7 @@ struct Data_elements * find_data_element(char * name) {
                 return(NULL);
         }
 
-        while (current->next != NULL) {
+        while (current != NULL) {
                 if(strcmp(current->name,name)==0) return(current);
                 current = current->next;
         }

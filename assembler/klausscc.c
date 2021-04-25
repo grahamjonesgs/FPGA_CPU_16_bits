@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
 
         char input_line[STR_LEN];
         int label_index=0;
-        char temp_string[STR_LEN];
+        char temp_string[STR_LEN*4+1];
         char input_file[STR_LEN]="";
         char code_file[STR_LEN]="";
         char debug_file[STR_LEN]="";
@@ -218,8 +218,8 @@ int main(int argc, char **argv) {
                         } // else if label
                         code_PC=next_code_PC;
                         if (code_PC>MAX_MEMORY) {
-                          printf("Error. Out of target CPU memory\n");
-                          error_control.error_count++;
+                                printf("Error. Out of target CPU memory\n");
+                                error_control.error_count++;
                         }
                 } //end of file-reading loop.
         } //else if comment
@@ -359,33 +359,20 @@ int main(int argc, char **argv) {
                 fprintf(debug_fp,"Data segment\n");
                 current_data=data_elements_head;
                 while (current_data != NULL) {
-                        if (strcmp(current_data->type,"INT")==0) {
-                                fprintf(debug_fp,"%04X: %s %s\n",current_data->position,current_data->name, current_data->type);
-                                strcpy(bitcode_line,current_data->data);
-                                bitcode_line[4]=0;
-                                fprintf(bitcode_fp, "%s", bitcode_line);
-                                strncpy(bitcode_matrix[bitcode_matrix_counter++],bitcode_line,5);
-                                fprintf(code_fp,"%s                // %s\n",bitcode_line,current_data->name);
-                        }
-                        else {
-                                strncpy(temp_string,current_data->data,current_data->length);
-                                temp_string[current_data->length]=0;
-                                fprintf(debug_fp,"%04X: %s %s %s\n",current_data->position,current_data->name, current_data->type, temp_string);
-                                for (int i=0;i<current_data->length;i+=4) {
-                                  bitcode_matrix[bitcode_matrix_counter][0]=temp_string[i];
-                                  bitcode_matrix[bitcode_matrix_counter][1]=temp_string[i+1];
-                                  bitcode_matrix[bitcode_matrix_counter][2]=temp_string[i+2];
-                                  bitcode_matrix[bitcode_matrix_counter][3]=temp_string[i+3];
-                                  bitcode_matrix[bitcode_matrix_counter][4]=0;
-                                  printf("xxxxxxxxxxxxxx added %s to chcecksum matrix\n",bitcode_matrix[bitcode_matrix_counter]);
-                                  bitcode_matrix_counter++;
-
+                        strncpy(temp_string,current_data->data,current_data->length);
+                        temp_string[current_data->length]=0;
+                        fprintf(debug_fp,"%04X: %s %s %s\n",current_data->position,current_data->name, current_data->type, temp_string);
+                        for (int i=0; i<current_data->length; i+=4) {
+                                for (int k=0; k<4; k++) {
+                                        bitcode_matrix[bitcode_matrix_counter][k]=temp_string[i+k];
                                 }
-
-                                fprintf(bitcode_fp, "%s", temp_string);
-                                fprintf(code_fp,"%s                // %s\n",temp_string,current_data->name);
-
                         }
+                        bitcode_matrix[bitcode_matrix_counter][4]=0;
+                        bitcode_matrix_counter++;
+                        fprintf(bitcode_fp, "%s", temp_string);
+                        fprintf(code_fp,"%s // %s\n",temp_string,current_data->name);
+
+
 
                         current_data = current_data->next;
                 }
