@@ -6,7 +6,7 @@
 #define MAX_MACRO_LOOPS 10
 #define DEFAULT_OPCODE_FILE "opcode_select.vh"
 #define MAX_MEMORY 32767
-#define MAX_ARRAY 255
+#define MAX_ARRAY 1024
 
 struct Opcode {
 								char name[32];

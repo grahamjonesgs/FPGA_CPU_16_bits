@@ -359,21 +359,21 @@ int main(int argc, char **argv) {
                 fprintf(debug_fp,"Data segment\n");
                 current_data=data_elements_head;
                 while (current_data != NULL) {
-                        strncpy(temp_string,current_data->data,current_data->length);
-                        temp_string[current_data->length]=0;
-                        fprintf(debug_fp,"%04X: %s %s %s\n",current_data->position,current_data->name, current_data->type, temp_string);
+                        fprintf(debug_fp,"%04X: %s %s ",current_data->position,current_data->name, current_data->type);
                         for (int i=0; i<current_data->length; i+=4) {
                                 for (int k=0; k<4; k++) {
-                                        bitcode_matrix[bitcode_matrix_counter][k]=temp_string[i+k];
+                                        bitcode_matrix[bitcode_matrix_counter][k]=*(current_data->data+i+k);
                                 }
+                                bitcode_matrix[bitcode_matrix_counter][4]=0;
+                                fprintf(bitcode_fp, "%s", bitcode_matrix[bitcode_matrix_counter]);
+                                if (i!=0) {
+                                  fprintf(debug_fp,"_");
+                                }
+                                fprintf(code_fp,"%s // %s\n",bitcode_matrix[bitcode_matrix_counter],current_data->name);
+                                fprintf(debug_fp,"%s",bitcode_matrix[bitcode_matrix_counter]);
+                                bitcode_matrix_counter++;
                         }
-                        bitcode_matrix[bitcode_matrix_counter][4]=0;
-                        bitcode_matrix_counter++;
-                        fprintf(bitcode_fp, "%s", temp_string);
-                        fprintf(code_fp,"%s // %s\n",temp_string,current_data->name);
-
-
-
+                        fprintf(debug_fp,"\n");
                         current_data = current_data->next;
                 }
         }
