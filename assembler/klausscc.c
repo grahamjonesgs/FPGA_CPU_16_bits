@@ -364,22 +364,24 @@ int main(int argc, char **argv) {
                                 strcpy(bitcode_line,current_data->data);
                                 bitcode_line[4]=0;
                                 fprintf(bitcode_fp, "%s", bitcode_line);
+                                strncpy(bitcode_matrix[bitcode_matrix_counter++],bitcode_line,5);
                                 fprintf(code_fp,"%s                // %s\n",bitcode_line,current_data->name);
                         }
                         else {
                                 strncpy(temp_string,current_data->data,current_data->length);
                                 temp_string[current_data->length]=0;
                                 fprintf(debug_fp,"%04X: %s %s %s\n",current_data->position,current_data->name, current_data->type, temp_string);
-                              /*   for (int i=0; i<current_data->length; i++) {
-                                        sprintf(bitcode_line,"00%02X",current_data->data[i]);
-                                        bitcode_line[4]=0;
-                                        fprintf(bitcode_fp, "%s", bitcode_line);
-                                        fprintf(code_fp,"%s                // %s\n",bitcode_line,current_data->name);
+                                for (int i=0;i<current_data->length;i+=4) {
+                                  bitcode_matrix[bitcode_matrix_counter][0]=temp_string[i];
+                                  bitcode_matrix[bitcode_matrix_counter][1]=temp_string[i+1];
+                                  bitcode_matrix[bitcode_matrix_counter][2]=temp_string[i+2];
+                                  bitcode_matrix[bitcode_matrix_counter][3]=temp_string[i+3];
+                                  bitcode_matrix[bitcode_matrix_counter][4]=0;
+                                  printf("xxxxxxxxxxxxxx added %s to chcecksum matrix\n",bitcode_matrix[bitcode_matrix_counter]);
+                                  bitcode_matrix_counter++;
 
-                                }*/
+                                }
 
-                                //printf(bitcode_line,"$s",current_data->data[i]);
-                                //bitcode_line[4]=0;
                                 fprintf(bitcode_fp, "%s", temp_string);
                                 fprintf(code_fp,"%s                // %s\n",temp_string,current_data->name);
 

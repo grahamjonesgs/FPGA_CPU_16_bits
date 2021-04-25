@@ -252,7 +252,8 @@ begin
         r_stack_reset=1'b0;
         r_msg_send_DV<=1'b0;
     end // if (i_Rst_H)
-    else if(w_uart_rx_DV&w_uart_rx_value==8'h53&i_load_H) // Load start flag received
+   // else if(w_uart_rx_DV&w_uart_rx_value==8'h53&i_load_H) // Load start flag received and down button pressed
+    else if(w_uart_rx_DV&w_uart_rx_value==8'h53) // Load start flag received ignore if button pressed
     begin
         r_SM<=LOADING_BYTE;
         r_load_byte_counter<=0;
@@ -286,6 +287,10 @@ begin
                                 r_error_code<=ERR_DATA_LOAD;
                             end // else (r_load_byte_counter==3)
                         end // case 8'h58
+                        8'h5A: // Start data flag
+                        begin
+                            o_ram_write_exec<=1'b0;
+                        end
                         8'h0a: ; // ignore LF
                         8'h0d: ; // ignore CR           
                         default:
