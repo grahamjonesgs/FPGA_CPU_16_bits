@@ -5,6 +5,7 @@
 #define STR_LEN 256
 #define MAX_MACRO_LOOPS 10
 #define DEFAULT_OPCODE_FILE "opcode_select.vh"
+#define MAX_MEMORY 32767
 
 struct Opcode {
 								char name[32];
@@ -54,6 +55,6 @@ int find_macro(char* name,struct Macro *macros);
 int expand_macros(FILE *input_fp,FILE *output_fp,char *temp_file, char *temp_file2, struct Macro *macros);
 int parse_data (FILE *input_fp,int code_pc);
 
-int add_data_element(char * name,char * type, int length,char * data,int start_data);
+void add_data_element(char * name,char * type, int length,char * data,int start_data);
 struct Data_elements * find_data_element(char * name);
 int is_var(char* word);

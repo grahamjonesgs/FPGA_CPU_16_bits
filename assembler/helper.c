@@ -32,6 +32,7 @@ int reg_num(char* reg) {
         if(error_control.pass_number==2) {
                 printf("Error. Register value not found %c, line %i\n",reg[0],error_control.input_line_number);
         }
+      return(0);
 }
 // Convert to hex representation
 int convert_hex(char* input, char* output) {
@@ -149,7 +150,7 @@ int find_macro(char* name,struct Macro *macros) {
         return value;
 }
 
-int add_data_element(char * name,char * type, int length,char * data,int start_data) {
+void add_data_element(char * name,char * type, int length,char * data,int start_data) {
         struct Data_elements * current;
 
         if (data_elements_head==NULL) {
@@ -175,6 +176,10 @@ int add_data_element(char * name,char * type, int length,char * data,int start_d
                 current->next->data=data;
                 current->next->position=current->position+current->length;
                 current->next->next = NULL;
+                if (current->next->position>MAX_MEMORY) {
+                  printf("Error. Out of target CPU memory\n");
+                  error_control.error_count++;
+                }
         }
 }
 

@@ -177,8 +177,8 @@ int expand_macros(FILE *input_fp,FILE *output_fp,char *temp_file1, char *temp_fi
 
 int parse_data (FILE *input_fp, int code_pc) {
         char str[STR_LEN];
+        char temp_string[STR_LEN*4];  // needs ot hold expanded format of data.
         char remain_str[STR_LEN];
-        int remain_str_counter;
         char *token;
         char line_words[MAX_WORDS][STR_LEN];
         char input_line[STR_LEN];
@@ -222,20 +222,19 @@ int parse_data (FILE *input_fp, int code_pc) {
                         }
                         else {
                                 if (strcmp(line_words[1],"INT")==0) {
-                                  if(strlen(line_words[2])!=0) {
-                                    data = malloc(5);
-                                    convert_hex(line_words[2],data);
-                                    add_data_element(line_words[0],line_words[1],4,data,code_pc);
-                                      }
-                                      else {
-                                        data = malloc(5);
-                                        strcpy(data,"0000");
-                                        add_data_element(line_words[0],line_words[1],4,data,code_pc);
-                                      }
+                                        if(strlen(line_words[2])!=0) {
+                                                data = malloc(5);
+                                                convert_hex(line_words[2],data);
+                                                add_data_element(line_words[0],line_words[1],4,data,code_pc);
+                                        }
+                                        else {
+                                                data = malloc(5);
+                                                strcpy(data,"0000");
+                                                add_data_element(line_words[0],line_words[1],4,data,code_pc);
+                                        }
                                 } // if int
                                 else {
                                         if (strcmp(line_words[1],"STRING")==0) {
-                                                //  remain_str_counter=0;
                                                 strcpy(remain_str,"");
                                                 for (int i=2; i< MAX_WORDS-2; i++) {
                                                         if ((strlen(line_words[i])!=0)&&i!=2) {
@@ -247,10 +246,21 @@ int parse_data (FILE *input_fp, int code_pc) {
                                                         printf("Warning. No definition for string variable %s\n",line_words[0]);
                                                         error_control.warning_count++;
                                                 }
+                                                if(strlen(remain_str)>=STR_LEN) {
+                                                        printf("Error. String too long for string variable %s\n",line_words[0]);
+                                                        error_control.error_count++;
+                                                }
+
                                                 else {
-                                                        data = malloc(strlen(remain_str)+1);
-                                                        strcpy(data,remain_str);
-                                                        add_data_element(line_words[0],line_words[1],strlen(remain_str),data,code_pc);
+                                                        data = malloc(strlen(remain_str)*4+1);
+                                                        data[0]=0;
+                                                        for (int i=0; i<strlen(remain_str); i++) {
+                                                                sprintf(temp_string,"00%02X",remain_str[i]);
+                                                                strcat(data,temp_string);
+                                                        }
+                                                        data[strlen(remain_str)*4]=0;
+                                                        //  strcpy(data,remain_str);
+                                                        add_data_element(line_words[0],line_words[1],strlen(remain_str)*4,data,code_pc);
                                                 }
                                         }
                                         else {
@@ -260,7 +270,6 @@ int parse_data (FILE *input_fp, int code_pc) {
                                 } // else if int
                         } // else if blank type
                 } // if variable definition
-
         } // end while read file
 
         return(0);

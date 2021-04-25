@@ -49,7 +49,6 @@ int main(int argc, char **argv) {
         int checksum;
         char bitcode_matrix [0xFFFF][5]; // For holding all bitcode to calc checksum
         unsigned int bitcode_matrix_counter=0;
-        int macro_number;
         struct Data_elements * current_data = data_elements_head;
 
         char opcode_file[STR_LEN]=DEFAULT_OPCODE_FILE;
@@ -218,6 +217,10 @@ int main(int argc, char **argv) {
                                 } // switch variables
                         } // else if label
                         code_PC=next_code_PC;
+                        if (code_PC>MAX_MEMORY) {
+                          printf("Error. Out of target CPU memory\n");
+                          error_control.error_count++;
+                        }
                 } //end of file-reading loop.
         } //else if comment
 
@@ -367,16 +370,19 @@ int main(int argc, char **argv) {
                                 strncpy(temp_string,current_data->data,current_data->length);
                                 temp_string[current_data->length]=0;
                                 fprintf(debug_fp,"%04X: %s %s %s\n",current_data->position,current_data->name, current_data->type, temp_string);
-                              //  for (int i=current_data->position; i<current_data->position+current_data->length; i++) {
-                               for (int i=0; i<current_data->length; i++) {
+                              /*   for (int i=0; i<current_data->length; i++) {
                                         sprintf(bitcode_line,"00%02X",current_data->data[i]);
                                         bitcode_line[4]=0;
                                         fprintf(bitcode_fp, "%s", bitcode_line);
                                         fprintf(code_fp,"%s                // %s\n",bitcode_line,current_data->name);
 
-///////////  Need to decide how to store string values in the data segment. Maybe 00 then ASCII
+                                }*/
 
-                                }
+                                //printf(bitcode_line,"$s",current_data->data[i]);
+                                //bitcode_line[4]=0;
+                                fprintf(bitcode_fp, "%s", temp_string);
+                                fprintf(code_fp,"%s                // %s\n",temp_string,current_data->name);
+
                         }
 
                         current_data = current_data->next;
