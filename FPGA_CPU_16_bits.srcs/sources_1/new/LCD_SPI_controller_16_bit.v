@@ -73,6 +73,8 @@ wire [15:0]  w_mem;
 wire         w_dout_opcode_exec;
 reg  [3:0]   r_reg_1;
 reg  [3:0]   r_reg_2;
+reg          r_extra_clock;
+reg          r_hcf_message_sent;
 
 //load control
 reg          o_ram_write_DV;
@@ -181,7 +183,7 @@ rams_sp_nc rams_sp_nc1 (
                .i_write_en(o_ram_write_DV)
            );
 
- ila_0  myila(.clk(i_Clk),
+ /*ila_0  myila(.clk(i_Clk),
  .probe0(w_opcode),
  .probe1(r_mem_read_addr),
  .probe2(r_PC),
@@ -189,7 +191,7 @@ rams_sp_nc rams_sp_nc1 (
  .probe4(w_dout_opcode_exec),
  .probe5(w_var1),
  .probe6(r_reg_1),
- .probe7(w_mem)); 
+ .probe7(w_mem)); */
 
 `include "timing_tasks.vh"
     `include "LCD_tasks.vh"
@@ -222,6 +224,7 @@ begin
     r_ram_next_write_addr=12'h0;
     r_stack_reset=1'b0;
     r_msg_send_DV<=1'b0;
+    r_hcf_message_sent<=1'b0;
 end
 
 always @(posedge i_Clk)
@@ -245,6 +248,7 @@ begin
         r_seven_seg_value=32'h20_10_00_06;
         r_stack_reset=1'b0;
         r_msg_send_DV<=1'b0;
+        r_hcf_message_sent<=1'b0;
     end // if (i_Rst_H)
    // else if(w_uart_rx_DV&w_uart_rx_value==8'h53&i_load_H) // Load start flag received and down button pressed
     else if(w_uart_rx_DV&w_uart_rx_value==8'h53) // Load start flag received ignore if button pressed
@@ -353,13 +357,14 @@ begin
                     rx_count<=8'b0;
                     o_ram_write_addr<=12'h0;
                     r_stack_reset<=1'b0;
-                    t_tx_message(8'd1);
+                    t_tx_message(8'd1); // Load OK message
+                    r_hcf_message_sent<=1'b0;
                 end
                 else
                 begin
                     r_SM<=HCF_1; // Halt and catch fire error
                     r_error_code<=ERR_CHECKSUM_LOAD;
-                    t_tx_message(8'd2);
+                    t_tx_message(8'd2); // Load error message
                 end
             end
 
@@ -369,6 +374,7 @@ begin
                 r_stack_read_flag<=2'h0;
                 r_msg_send_DV<=1'b0;
                 o_ram_write_DV<=1'b0;
+                r_extra_clock<=1'b0;
                 if(i_stack_error)
                 begin
                     r_SM<=HCF_1; // Halt and catch fire error 1
@@ -391,17 +397,9 @@ begin
                 end 
                 else
                 begin
-                    r_SM<=OPCODE_FETCH2;
-                end
-                
-            end
-            
-            
-            OPCODE_FETCH2:
-            begin
-                
+                    //r_SM<=OPCODE_FETCH2;
                     r_SM<=OPCODE_EXECUTE;
-                
+                end
                 
             end
             
@@ -410,8 +408,16 @@ begin
             begin
                 t_opcode_select;
             end // case OPCODE_EXECUTE
+            
+            
+            
             HCF_1:
             begin
+                if(!r_hcf_message_sent)
+                begin
+                    t_tx_message(8'h3); // Test message as temp
+                    r_hcf_message_sent<=1'b1;
+                end
                 r_stack_write_flag<=2'h0;
                 r_stack_read_flag<=2'h0;
                 r_timeout_counter<=0;

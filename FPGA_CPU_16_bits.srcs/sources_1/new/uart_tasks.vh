@@ -81,6 +81,24 @@ task t_tx_message;
             r_msg[111:104]<=8'h0D;
             r_msg_length<=8'h0E;
         end
+        3: // Segmentatiion error. Attempt to execute data.
+        begin
+            r_msg[7:0]<=8'h54;
+            r_msg[15:8]<=8'h65;
+            r_msg[23:16]<=8'h73;
+            r_msg[31:24]<=8'h74;
+            r_msg[39:32]<=8'h20;
+            r_msg[47:40]<=8'h6D;
+            r_msg[55:48]<=8'h65;
+            r_msg[63:56]<=8'h73;
+            r_msg[71:64]<=8'h73;
+            r_msg[79:72]<=8'h61;
+            r_msg[87:80]<=8'h67;
+            r_msg[95:88]<=8'h65;
+            r_msg[103:96]<=8'h0A;
+            r_msg[111:104]<=8'h0D;
+            r_msg_length<=8'h0E;
+        end
         default:
             begin
                 r_msg[7:0]<=8'h00;

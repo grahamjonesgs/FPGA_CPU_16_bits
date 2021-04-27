@@ -5,9 +5,16 @@
 task t_set_reg_from_memory;
 input [15:0] i_location; // Not used here, but needed to show this is a two word opcode
     begin
-        r_register[r_reg_2]<=w_mem; // the memory location, allows read of code as well as data
-        r_SM<=OPCODE_REQUEST;  
-        r_PC<=r_PC+2;    
+        if(r_extra_clock==0)
+        begin
+           r_extra_clock<=1'b1;
+        end
+        else
+        begin
+            r_register[r_reg_2]<=w_mem; // the memory location, allows read of code as well as data
+            r_SM<=OPCODE_REQUEST;  
+            r_PC<=r_PC+2;  
+        end  
     end
 endtask 
 
@@ -18,19 +25,27 @@ endtask
 task t_set_memory_from_reg;
 input [15:0] i_location; // Not used here, but needed to show this is a two word opcode
     begin
-    //    if (w_dout_opcode_exec) // works as the memory read address is set to same as i_location already
-    //    begin
-    //         r_SM<=HCF_1; // Halt and catch fire error
-     //        r_error_code<=ERR_SEG_WRITE_TO_CODE;
-     //   end
-     //   else
-     //   begin
+        if(r_extra_clock==0)
+        begin
+            r_extra_clock<=1'b1;
+        end
+        else
+        begin
+    
+            //    if (w_dout_opcode_exec) // works as the memory read address is set to same as i_location already
+            //    begin
+            //         r_SM<=HCF_1; // Halt and catch fire error
+            //        r_error_code<=ERR_SEG_WRITE_TO_CODE;
+             //   end
+             //   else
+             //   begin
             o_ram_write_addr<=w_var1;
             o_ram_write_value<=r_register[r_reg_2];
             o_ram_write_DV<=1'b1;
             r_SM<=OPCODE_REQUEST;  
             r_PC<=r_PC+2; 
        // end   
+       end
     end
 endtask 
 
