@@ -1,21 +1,29 @@
 module rams_sp_nc (
 
     input               i_clk,
-    input       [14:0]  i_opcode_read_addr,
-    input       [14:0]  i_mem_read_addr, 
-    output reg  [15:0]  o_dout_opcode,
-    output reg          o_dout_opcode_exec,
-    output reg  [15:0]  o_dout_mem,
-    output reg  [15:0]  o_dout_var1,
-    output reg  [15:0]  o_dout_var2,
+    
+    // Progam load and data update
     input       [11:0]  i_write_addr,
     input       [15:0]  i_write_value,
     input               i_write_en_exec,
-    input               i_write_en
+    input               i_write_en,
+       
+    // Opcode
+    input       [14:0]  i_opcode_read_addr,
+    output reg  [15:0]  o_dout_opcode,
+    output reg          o_dout_opcode_exec,
+    
+    output reg  [15:0]  o_dout_var1,
+    output reg  [15:0]  o_dout_var2,
+    
+    // Data       
+    input       [14:0]  i_mem_read_addr,
+    output reg  [15:0]  o_dout_mem
     );
 
 
-(* ram_style = "block" *) reg [16:0] RAM [32767:0];
+//(* ram_style = "block" *) reg [16:0] RAM [32767:0];
+(* ram_style = "block" *) reg [16:0] RAM [12767:0];
 
 initial
 begin

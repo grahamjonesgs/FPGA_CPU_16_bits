@@ -13,11 +13,11 @@
 
 // Starting Code to flash LED
 //LOOP1:
-3030 0001           //LEDV 0x0001
-F013 FFFF           //DELAYV 0xFFFF
-3030 0000           //LEDV 0x0000
-F013 FFFF           //DELAYV 0xFFFF
-1000 0000           //JMP LOOP1:
+13030 10001           //LEDV 0x0001
+1F013 1FFFF           //DELAYV 0xFFFF
+13030 10000           //LEDV 0x0000
+1F013 1FFFF           //DELAYV 0xFFFF
+11000 10000           //JMP LOOP1:
 
 
 

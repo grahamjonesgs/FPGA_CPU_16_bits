@@ -40,9 +40,9 @@ module LCD_SPI_controller_16_bit(
        );
  
 parameter STACK_SIZE=1024;
-parameter OPCODE_REQUEST=16'd1, OPCODE_FETCH=16'd2, OPCODE_EXECUTE=16'd4, HCF_1=16'd8,HCF_2=16'd16,  HCF_3=16'd32, HCF_4=16'd64;
+parameter OPCODE_REQUEST=16'd1, OPCODE_FETCH=16'd2, OPCODE_FETCH2=16'd4, OPCODE_EXECUTE=16'd8, HCF_1=16'd16,HCF_2=16'd32,  HCF_3=16'd64, HCF_4=16'd128;
 parameter LOAD_START=16'd128, LOADING_BYTE=16'd256, LOAD_COMPLETE=16'd512, LOAD_WAIT=16'd1024;
-parameter ERR_INV_OPCODE=8'h1, ERR_INV_FSM_STATE=8'h2, ERR_STACK=8'h3, ERR_DATA_LOAD=8'h4, ERR_CHECKSUM_LOAD=8'h5;
+parameter ERR_INV_OPCODE=8'h1, ERR_INV_FSM_STATE=8'h2, ERR_STACK=8'h3, ERR_DATA_LOAD=8'h4, ERR_CHECKSUM_LOAD=8'h5, ERR_OVERFLOW=8'h6, ERR_SEG_WRITE_TO_CODE='h7, ERR_SEG_EXEC_DATA='h8;
 
 // UART receive control
 wire [7:0]   w_uart_rx_value;    // Received value
@@ -84,6 +84,8 @@ reg  [7:0]   rx_count;
 reg  [1:0]   r_load_byte_counter;
 reg  [15:0]  r_checksum;
 reg  [15:0]  r_old_checksum;
+reg  [15:0]  r_calc_checksum;
+reg  [15:0]  r_rec_checksum;
 
 // Register control
 (* ram_style = "block" *) reg  [15:0]  r_register[15:0];
@@ -179,23 +181,15 @@ rams_sp_nc rams_sp_nc1 (
                .i_write_en(o_ram_write_DV)
            );
 
- /*ila_0  myila(.clk(i_Clk),
+ ila_0  myila(.clk(i_Clk),
  .probe0(w_opcode),
- .probe1(r_check_number),
+ .probe1(r_mem_read_addr),
  .probe2(r_PC),
  .probe3(r_SM),
- .probe4(w_uart_rx_value),
- .probe5(o_TX_LCD_Byte),
- .probe6(8'b0),
- .probe7(r_register[0]),
- .probe8(r_reg_1),
- .probe9(r_reg_2),
- .probe10(o_SPI_LCD_MOSI),
- .probe11(o_SPI_LCD_CS_n),
- .probe12(o_LCD_DC),
- .probe13(o_LCD_reset_n),
- .probe14(r_zero_flag),
- .probe15(1'b0)); */
+ .probe4(w_dout_opcode_exec),
+ .probe5(w_var1),
+ .probe6(r_reg_1),
+ .probe7(w_mem)); 
 
 `include "timing_tasks.vh"
     `include "LCD_tasks.vh"
@@ -261,6 +255,7 @@ begin
         r_ram_next_write_addr<=12'h0;
         r_checksum<=16'h0;
         r_old_checksum<=16'h0;
+        o_ram_write_exec<=1'b1; // Start with code segment
     end
     else
     begin
@@ -270,7 +265,7 @@ begin
             begin
                 o_ram_write_DV<=1'b0;
                 r_stack_reset<=1'b1;
-                o_ram_write_exec<=1'b1;
+                
                 r_seven_seg_value<={8'h24,4'h0,r_ram_next_write_addr[11:8],4'h0,r_ram_next_write_addr[7:4],4'h0,r_ram_next_write_addr[3:0]};
                 if (w_uart_rx_DV)
                 begin
@@ -280,6 +275,14 @@ begin
                             if (r_load_byte_counter==0)
                             begin
                                 r_SM<=LOAD_COMPLETE;
+                                // Remove last data writen as was checksum, set to non executable, xxxxxxx potential errer
+                                o_ram_write_exec<=1'b0;
+                                //o_ram_write_addr<=o_ram_write_addr-1;
+                                r_calc_checksum<=r_old_checksum+o_ram_write_addr-1;
+                                r_rec_checksum<=o_ram_write_value;
+                                o_ram_write_value<=16'h0;
+                                o_ram_write_DV<=1'b1;
+                               
                             end // (r_load_byte_counter==0)
                             else
                             begin
@@ -312,6 +315,11 @@ begin
                                 r_load_byte_counter<=0;
                                 o_ram_write_addr<=r_ram_next_write_addr;
                                 r_ram_next_write_addr<=r_ram_next_write_addr+1;
+                                if (r_ram_next_write_addr>16'h7FFF)
+                                begin
+                                    r_SM<=HCF_1; // Halt and catch fire error
+                                    r_error_code<=ERR_OVERFLOW;
+                                end
                                 o_ram_write_DV<=1'b1;
                                 r_old_checksum<=r_checksum;
                                 r_checksum<=r_checksum+o_ram_write_value;
@@ -327,11 +335,10 @@ begin
 
             LOAD_COMPLETE:
             begin
-                r_seven_seg_value<=32'h22222222;
-                r_checksum=r_old_checksum; // remove last value from checksum, as was checksum incomming    
-                r_checksum=r_checksum+o_ram_write_addr-1;
-                if (r_checksum==o_ram_write_value)
-                begin
+                o_ram_write_DV<=1'b0; // Finish write cycle from removing the old Checksum value
+                r_seven_seg_value<=32'h22222222; // Blank 7 seg
+                if (r_calc_checksum==r_rec_checksum) // Last value received should be checksum
+                begin  // Reset all flags and jump to first instruction
                     o_TX_LCD_Count<=4'd1;
                     o_TX_LCD_Byte<=8'b0;
                     r_SM<=OPCODE_REQUEST;
@@ -361,23 +368,43 @@ begin
                 r_stack_write_flag<=2'h0;
                 r_stack_read_flag<=2'h0;
                 r_msg_send_DV<=1'b0;
+                o_ram_write_DV<=1'b0;
                 if(i_stack_error)
                 begin
                     r_SM<=HCF_1; // Halt and catch fire error 1
                     r_error_code<=ERR_STACK;
-                end // default case
-                else
-                begin
-                    r_SM<=OPCODE_FETCH;
                 end
+                
+                r_SM<=OPCODE_FETCH;
+                
             end
             
             OPCODE_FETCH:
             begin
                 r_reg_2=w_opcode[3:0];
                 r_reg_1=w_opcode[7:4];
-                r_SM<=OPCODE_EXECUTE;
+                r_mem_read_addr<=w_var1;  // In case we need to read the memory
+                if(!w_dout_opcode_exec)
+                begin
+                    r_SM<=HCF_1; // Halt and catch fire error 1
+                    r_error_code<=ERR_SEG_EXEC_DATA;
+                end 
+                else
+                begin
+                    r_SM<=OPCODE_FETCH2;
+                end
+                
             end
+            
+            
+            OPCODE_FETCH2:
+            begin
+                
+                    r_SM<=OPCODE_EXECUTE;
+                
+                
+            end
+            
                         
             OPCODE_EXECUTE:
             begin
@@ -421,7 +448,7 @@ begin
                     case (r_error_code)
                     ERR_CHECKSUM_LOAD: 
                         // incoming checksum
-                        r_seven_seg_value<={4'h0,r_checksum[15:12],4'h0,r_checksum[11:8],4'h0,r_checksum[7:4],4'h0,r_checksum[3:0]}; 
+                        r_seven_seg_value<={4'h0,r_rec_checksum[15:12],4'h0,r_rec_checksum[11:8],4'h0,r_rec_checksum[7:4],4'h0,r_rec_checksum[3:0]}; 
                     ERR_DATA_LOAD: 
                          // Load counter       
                          r_seven_seg_value<={8'h24,4'h0,r_ram_next_write_addr[11:8],4'h0,r_ram_next_write_addr[7:4],4'h0,r_ram_next_write_addr[3:0]};
@@ -438,7 +465,7 @@ begin
                     case (r_error_code)
                     ERR_CHECKSUM_LOAD: 
                         // Calculated checksim
-                        r_seven_seg_value<={4'h0,o_ram_write_value[15:12],4'h0,o_ram_write_value[11:8],4'h0,o_ram_write_value[7:4],4'h0,o_ram_write_value[3:0]};
+                        r_seven_seg_value<={4'h0,r_calc_checksum[15:12],4'h0,r_calc_checksum[11:8],4'h0,r_calc_checksum[7:4],4'h0,r_calc_checksum[3:0]};
                     
                     ERR_DATA_LOAD: 
                          // Three blanks then loading byte counter

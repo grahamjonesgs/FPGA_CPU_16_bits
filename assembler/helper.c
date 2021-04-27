@@ -178,7 +178,7 @@ void add_data_element(char * name,char * type, int length,char * data,int start_
                 strncpy(current->next->type,type,STR_LEN);
                 current->next->length=length;
                 current->next->data=data;
-                current->next->position=current->position+current->length;
+                current->next->position=current->position+current->length/4;
                 current->next->next = NULL;
                 if (current->next->position>MAX_MEMORY) {
                   printf("Error. Out of target CPU memory\n");

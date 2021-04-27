@@ -382,7 +382,6 @@ int main(int argc, char **argv) {
         for (int i=0; i<bitcode_matrix_counter; i++) {
                 checksum=(checksum+strtol(bitcode_matrix[i],NULL,16))%(0xFFFF+1);
         }
-        printf ("xxxxxxx old check %04X",checksum);
         checksum=(checksum+bitcode_matrix_counter-1)%(0xFFFF+1);
         if (error_control.verbose>0) printf("Checksum = %04X",checksum);
         fprintf(bitcode_fp,"%04XX",checksum);

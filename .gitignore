@@ -4,6 +4,7 @@ FPGA_CPU_16_bits.hw
 FPGA_CPU_16_bits.ip_user_files
 FPGA_CPU_16_bits.runs
 FPGA_CPU_16_bits.sim
+/FPGA_CPU_16_bits.srcs/sources_1/ip
 *.o
 *.debug
 assembler/testcode/*
