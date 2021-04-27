@@ -222,7 +222,7 @@ begin
     r_overflow_flag=0;
     r_error_code=8'h0;
     r_timeout_counter=32'b0;
-    r_seven_seg_value=32'h20_10_00_05;
+    r_seven_seg_value=32'h20_10_00_06;
     rx_count=8'b0;
     o_ram_write_addr=12'h0;
     r_ram_next_write_addr=12'h0;
@@ -248,7 +248,7 @@ begin
         rx_count<=8'b0;
         o_ram_write_addr<=12'h0;
         r_ram_next_write_addr<=12'h0;
-        r_seven_seg_value=32'h20_10_00_05;
+        r_seven_seg_value=32'h20_10_00_06;
         r_stack_reset=1'b0;
         r_msg_send_DV<=1'b0;
     end // if (i_Rst_H)
